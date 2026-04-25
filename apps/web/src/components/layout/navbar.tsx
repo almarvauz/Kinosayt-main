@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useTheme } from "next-themes";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Sun, Moon, Search, Clapperboard, Film, Tv, ChevronDown } from "lucide-react";
+import { Sun, Moon, Search, Clapperboard, Film, Tv, Smile, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { locales, localeLabels, type Locale } from "@/lib/i18n";
@@ -48,6 +48,10 @@ export function Navbar() {
           <Link href="/serials" className={cn("flex items-center gap-2 hover:text-brand-500 transition-colors", pathname.startsWith("/serials") && "text-brand-500")}>
             <Tv className="w-4 h-4" />
             Seriallar
+          </Link>
+          <Link href="/multfilmlar" className={cn("flex items-center gap-2 hover:text-brand-500 transition-colors", pathname.startsWith("/multfilmlar") && "text-brand-500")}>
+            <Smile className="w-4 h-4" />
+            Multfilmlar
           </Link>
         </nav>
 

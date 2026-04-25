@@ -251,4 +251,69 @@ export class MoviesService {
     await this.cache.set(cacheKey, result, 86400000); // 24h
     return result;
   }
+  async adminCreate(body: {
+    title: string;
+    slug: string;
+    year: number;
+    posterUrl: string;
+    videoUrl: string;
+    imdbId?: string;
+    categorySlug?: string;
+    genres?: string[];
+    isPremiere?: boolean;
+  }) {
+    // Resolve or create category
+    let categoryId: number | undefined;
+    if (body.categorySlug) {
+      const cat = await this.prisma.category.upsert({
+        where: { slug: body.categorySlug },
+        update: {},
+        create: {
+          slug: body.categorySlug,
+          name: body.categorySlug.charAt(0).toUpperCase() + body.categorySlug.slice(1),
+        },
+      });
+      categoryId = cat.id;
+    }
+
+    // Determine next externalId
+    const last = await this.prisma.movie.findFirst({ orderBy: { externalId: "desc" } });
+    const externalId = (last?.externalId ?? 0) + 1;
+
+    // Create movie
+    const movie = await this.prisma.movie.create({
+      data: {
+        title: body.title,
+        slug: body.slug,
+        year: body.year,
+        posterUrl: body.posterUrl,
+        videoUrl: body.videoUrl,
+        externalId,
+        imdbId: body.imdbId || null,
+        isPremiere: body.isPremiere ?? false,
+        categoryId: categoryId ?? null,
+      },
+      include: MOVIE_INCLUDE,
+    });
+
+    // Connect genres
+    if (body.genres?.length) {
+      for (const slug of body.genres) {
+        const genre = await this.prisma.genre.upsert({
+          where: { slug },
+          update: {},
+          create: { slug, name: slug.charAt(0).toUpperCase() + slug.slice(1) },
+        });
+        await this.prisma.movieGenre.upsert({
+          where: { movieId_genreId: { movieId: movie.id, genreId: genre.id } },
+          update: {},
+          create: { movieId: movie.id, genreId: genre.id },
+        });
+      }
+    }
+
+    // Refresh with genres
+    const fresh = await this.prisma.movie.findUnique({ where: { id: movie.id }, include: MOVIE_INCLUDE });
+    return formatMovie(fresh!);
+  }
 }

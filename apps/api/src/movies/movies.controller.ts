@@ -107,4 +107,23 @@ export class MoviesController {
   findOne(@Param("slug") slug: string) {
     return this.moviesService.findBySlug(slug);
   }
+
+  /** Admin: create a new movie (no auth guard for now — PIN is on frontend, real auth = next phase) */
+  @Post("admin")
+  async adminCreate(
+    @Body()
+    body: {
+      title: string;
+      slug: string;
+      year: number;
+      posterUrl: string;
+      videoUrl: string;
+      imdbId?: string;
+      categorySlug?: string;
+      genres?: string[];
+      isPremiere?: boolean;
+    },
+  ) {
+    return this.moviesService.adminCreate(body);
+  }
 }
