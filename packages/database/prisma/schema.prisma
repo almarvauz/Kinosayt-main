@@ -118,3 +118,10 @@ model SeriesGenre {
 
   @@id([seriesId, genreId])
 }
+
+/// Generic key-value settings store. Used for runtime config (e.g. R2 credentials).
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}

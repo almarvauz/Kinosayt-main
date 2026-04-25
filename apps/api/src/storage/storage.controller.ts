@@ -5,6 +5,11 @@ import { StorageService } from "./storage.service";
 export class StorageController {
   constructor(private readonly storageService: StorageService) {}
 
+  @Get("status")
+  status() {
+    return { configured: this.storageService.isConfigured };
+  }
+
   @Post("upload-url")
   async getUploadUrl(@Body() body: { filename: string; contentType: string }) {
     // Generate a unique key for the file

@@ -129,3 +129,48 @@ export function escHtml(text: string): string {
   return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
+const SUPER_ADMIN_TOKEN = process.env.SUPER_ADMIN_TOKEN ?? "";
+
+async function adminRequest(method: string, path: string, body?: unknown): Promise<any> {
+  const res = await fetch(`${API}${path}`, {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${SUPER_ADMIN_TOKEN}`,
+    },
+    ...(body ? { body: JSON.stringify(body) } : {}),
+  });
+  if (!res.ok) throw new Error(`Admin API error ${res.status}`);
+  return res.status === 204 ? null : res.json();
+}
+
+export async function getR2Config(): Promise<{
+  endpoint: string | null;
+  accessKeyId: string | null;
+  secretAccessKey: string | null;
+  bucketName: string | null;
+}> {
+  // Fetch masked settings and show what's configured
+  const all = await adminRequest("GET", "/settings");
+  return {
+    endpoint: all["R2_ENDPOINT"] ?? null,
+    accessKeyId: all["R2_ACCESS_KEY_ID"] ?? null,
+    secretAccessKey: all["R2_SECRET_ACCESS_KEY"] ?? null,
+    bucketName: all["R2_BUCKET_NAME"] ?? null,
+  };
+}
+
+export async function setR2Config(config: {
+  endpoint?: string;
+  accessKeyId?: string;
+  secretAccessKey?: string;
+  bucketName?: string;
+}): Promise<void> {
+  await adminRequest("PUT", "/settings/r2/config", config);
+}
+
+export async function getStorageStatus(): Promise<{ configured: boolean }> {
+  const res = await fetch(`${API}/storage/status`);
+  if (!res.ok) return { configured: false };
+  return res.json();
+}

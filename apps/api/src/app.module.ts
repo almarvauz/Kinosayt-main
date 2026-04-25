@@ -13,6 +13,7 @@ import { ScraperModule } from "./scraper/scraper.module";
 import { SearchModule } from "./search/search.module";
 import { StorageModule } from "./storage/storage.module";
 import { SeriesModule } from "./series/series.module";
+import { SettingsModule } from "./settings/settings.module";
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { SeriesModule } from "./series/series.module";
     SearchModule,
     StorageModule,
     SeriesModule,
+    SettingsModule,
   ],
 })
 export class AppModule {}

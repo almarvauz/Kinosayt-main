@@ -13,6 +13,9 @@ import {
   downloadUrl,
   setMovieCode,
   escHtml,
+  getR2Config,
+  setR2Config,
+  getStorageStatus,
 } from "./api";
 import type { Lang } from "./api";
 import type { MovieDto } from "@kinosayt/types";
@@ -159,6 +162,8 @@ const t: Record<string, Record<Lang, string>> = {
   invalidId: { uz: "❌ Noto'g'ri ID. Raqam yuboring yoki xabar forward qiling.", ru: "❌ Неверный ID. Отправьте число или перешлите сообщение.", en: "❌ Invalid ID. Send a number or forward a message." },
   adminList: { uz: "👥 Adminlar ro'yxati", ru: "👥 Список админов", en: "👥 Admin list" },
   setCode: { uz: "🔐 Kod qo'yish", ru: "🔐 Установить код", en: "🔐 Set code" },
+  r2Settings: { uz: "☁️ R2 Xotira sozlash", ru: "☁️ Настройка R2", en: "☁️ R2 Storage settings" },
+  r2Status: { uz: "📡 R2 Holati", ru: "📡 Статус R2", en: "📡 R2 Status" },
   setCodeSearchPrompt: {
     uz: "🔍 Kod qo'ymoqchi bo'lgan kino nomini yozing:",
     ru: "🔍 Напишите название фильма для установки кода:",
@@ -195,7 +200,11 @@ type UserState =
   | "admin_set_short_bio"
   | "admin_add_admin"
   | "admin_code_search"
-  | "admin_code_enter";
+  | "admin_code_enter"
+  | "admin_r2_endpoint"
+  | "admin_r2_access_key"
+  | "admin_r2_secret_key"
+  | "admin_r2_bucket";
 
 const userStates = new Map<number, UserState>();
 const userLangs = new Map<number, Lang>();
@@ -269,7 +278,8 @@ function adminKeyboard(uid: number) {
     [Markup.button.text(i("shortBio", lang)), Markup.button.text(i("setCode", lang))],
   ];
   if (isSuperAdmin(uid)) {
-    rows.push([Markup.button.text(i("addAdmin", lang))]);
+    rows.push([Markup.button.text(i("addAdmin", lang)), Markup.button.text(i("r2Settings", lang))]);
+    rows.push([Markup.button.text(i("r2Status", lang))]);
   }
   rows.push([Markup.button.text(i("backMenu", lang))]);
   return Markup.keyboard(rows).resize();
@@ -440,6 +450,64 @@ bot.on(message("text"), async (ctx) => {
     return;
   }
 
+  // ── R2 state handlers (super admin only) ──
+  if (state === "admin_r2_endpoint" && isSuperAdmin(uid)) {
+    setState(uid, "admin_r2_access_key");
+    await ctx.reply(
+      `✅ Endpoint saqlandi.\n\n🔑 <b>Access Key ID</b> ni yuboring:`,
+      { parse_mode: "HTML", ...cancelKeyboard(uid) }
+    );
+    // Store endpoint temporarily
+    (ctx as any).session_r2 = (ctx as any).session_r2 || {};
+    (global as any)[`r2_${uid}_endpoint`] = text.trim();
+    return;
+  }
+
+  if (state === "admin_r2_access_key" && isSuperAdmin(uid)) {
+    setState(uid, "admin_r2_secret_key");
+    (global as any)[`r2_${uid}_accessKey`] = text.trim();
+    await ctx.reply(
+      `✅ Access Key ID saqlandi.\n\n🔒 <b>Secret Access Key</b> ni yuboring:`,
+      { parse_mode: "HTML", ...cancelKeyboard(uid) }
+    );
+    return;
+  }
+
+  if (state === "admin_r2_secret_key" && isSuperAdmin(uid)) {
+    setState(uid, "admin_r2_bucket");
+    (global as any)[`r2_${uid}_secretKey`] = text.trim();
+    await ctx.reply(
+      `✅ Secret Key saqlandi.\n\n🪣 <b>Bucket nomi</b> ni yuboring (default: kinosayt):`,
+      { parse_mode: "HTML", ...cancelKeyboard(uid) }
+    );
+    return;
+  }
+
+  if (state === "admin_r2_bucket" && isSuperAdmin(uid)) {
+    setState(uid, "idle");
+    const endpoint   = (global as any)[`r2_${uid}_endpoint`];
+    const accessKeyId = (global as any)[`r2_${uid}_accessKey`];
+    const secretAccessKey = (global as any)[`r2_${uid}_secretKey`];
+    const bucketName = text.trim() || "kinosayt";
+    // Clean up
+    delete (global as any)[`r2_${uid}_endpoint`];
+    delete (global as any)[`r2_${uid}_accessKey`];
+    delete (global as any)[`r2_${uid}_secretKey`];
+    try {
+      await setR2Config({ endpoint, accessKeyId, secretAccessKey, bucketName });
+      await ctx.reply(
+        `✅ <b>Cloudflare R2 konfiguratsiyasi muvaffaqiyatli saqlandi!</b>\n\n` +
+        `📦 Bucket: <code>${escHtml(bucketName)}</code>\n` +
+        `🌐 Endpoint: <code>${escHtml(endpoint.slice(0, 30))}...</code>\n\n` +
+        `Keyingi so'rovdan boshlab yangi sozlamalar ishga tushadi.`,
+        { parse_mode: "HTML", ...adminKeyboard(uid) }
+      );
+    } catch (e) {
+      await ctx.reply(`❌ Xatolik: ${escHtml(String(e))}`, { parse_mode: "HTML", ...adminKeyboard(uid) });
+    }
+    return;
+  }
+
   // ── Search state ──
   if (state === "searching") {
     setState(uid, "idle");
@@ -525,6 +593,32 @@ bot.on(message("text"), async (ctx) => {
       `${i("adminList", lang)}:\n${list}\n\n${i("addAdminPrompt", lang)}`,
       { parse_mode: "HTML", ...cancelKeyboard(uid) }
     );
+    return;
+  }
+  if (matchBtn(text, "r2Settings") && isSuperAdmin(uid)) {
+    setState(uid, "admin_r2_endpoint");
+    await ctx.reply(
+      `☁️ <b>Cloudflare R2 sozlash</b>\n\nQuyidagi ma'lumotlarni ketma-ket kiritasiz:\n1. Endpoint URL\n2. Access Key ID\n3. Secret Access Key\n4. Bucket nomi\n\n🌐 <b>Endpoint URL</b> ni yuboring:\n<i>(masalan: https://abc123.r2.cloudflarestorage.com)</i>`,
+      { parse_mode: "HTML", ...cancelKeyboard(uid) }
+    );
+    return;
+  }
+  if (matchBtn(text, "r2Status") && isSuperAdmin(uid)) {
+    try {
+      const [status, config] = await Promise.all([getStorageStatus(), getR2Config()]);
+      const configuredText = status.configured
+        ? "✅ <b>Faol (ishlayapti)</b>"
+        : "❌ <b>Sozlanmagan</b>";
+      const endpointText = config.endpoint ? `\n🌐 Endpoint: <code>${escHtml(config.endpoint)}</code>` : "";
+      const bucketText = config.bucketName ? `\n🪣 Bucket: <code>${escHtml(config.bucketName)}</code>` : "";
+      const keyText = config.accessKeyId ? `\n🔑 Access Key: <code>${escHtml(config.accessKeyId)}</code>` : "";
+      await ctx.reply(
+        `📡 <b>Cloudflare R2 holati</b>\n\n${configuredText}${endpointText}${bucketText}${keyText}`,
+        { parse_mode: "HTML", ...adminKeyboard(uid) }
+      );
+    } catch (e) {
+      await ctx.reply(`❌ Holat tekshirishda xatolik: ${escHtml(String(e))}`, { parse_mode: "HTML", ...adminKeyboard(uid) });
+    }
     return;
   }
   if (matchBtn(text, "backMenu")) {
