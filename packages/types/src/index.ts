@@ -30,8 +30,48 @@ export interface MovieDto {
   createdAt: string;
 }
 
+export interface EpisodeDto {
+  id: number;
+  episodeNumber: number;
+  title: string | null;
+  videoUrl: string;
+  viewCount: number;
+  createdAt: string;
+}
+
+export interface SeasonDto {
+  id: number;
+  seasonNumber: number;
+  episodes: EpisodeDto[];
+}
+
+export interface SeriesDto {
+  id: number;
+  title: string;
+  slug: string;
+  posterUrl: string;
+  year: number;
+  imdbRating: number | null;
+  imdbDescription: string | null;
+  imdbId: string | null;
+  viewCount: number;
+  category: CategoryDto | null;
+  genres: GenreDto[];
+  seasons: SeasonDto[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface PaginatedMovies {
   data: MovieDto[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface PaginatedSeries {
+  data: Omit<SeriesDto, "seasons">[];
   total: number;
   page: number;
   limit: number;

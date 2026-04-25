@@ -11,6 +11,8 @@ import { CategoriesModule } from "./categories/categories.module";
 import { StreamModule } from "./stream/stream.module";
 import { ScraperModule } from "./scraper/scraper.module";
 import { SearchModule } from "./search/search.module";
+import { StorageModule } from "./storage/storage.module";
+import { SeriesModule } from "./series/series.module";
 
 @Module({
   imports: [
@@ -44,6 +46,8 @@ import { SearchModule } from "./search/search.module";
     StreamModule,
     ScraperModule,
     SearchModule,
+    StorageModule,
+    SeriesModule,
   ],
 })
 export class AppModule {}

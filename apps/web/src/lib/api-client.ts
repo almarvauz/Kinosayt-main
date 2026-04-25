@@ -1,4 +1,4 @@
-import type { MovieDto, PaginatedMovies, GenreDto, MovieFilters, CategoryDto } from "@kinosayt/types";
+import type { MovieDto, PaginatedMovies, GenreDto, MovieFilters, CategoryDto, SeriesDto, PaginatedSeries } from "@kinosayt/types";
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
@@ -31,7 +31,6 @@ export const apiClient = {
 
   /** Elasticsearch-powered fuzzy search */
   searchMovies(filters: MovieFilters = {}): Promise<PaginatedMovies> {
-    // Use ES /search endpoint when a query is present, else fall back to /movies
     if (filters.q) {
       return request(`/search${buildQuery(filters)}`, { next: { revalidate: 30 } });
     }
@@ -59,5 +58,41 @@ export const apiClient = {
       method: "POST",
       next: { revalidate: 0 },
     });
+  },
+
+  // ─── Series ──────────────────────────────────────────────────
+  getSeries(filters: MovieFilters = {}): Promise<PaginatedSeries> {
+    return request(`/series${buildQuery(filters)}`);
+  },
+
+  getSeriesTrending(): Promise<SeriesDto[]> {
+    return request("/series/trending", { next: { revalidate: 60 } });
+  },
+
+  getSerie(slug: string): Promise<SeriesDto> {
+    return request(`/series/${slug}`, { next: { revalidate: 3600 } });
+  },
+
+  incrementSeriesView(slug: string): Promise<void> {
+    return request(`/series/${slug}/view`, { method: "POST", next: { revalidate: 0 } });
+  },
+
+  getEpisodeStream(slug: string, season: number, episode: number): Promise<{ videoUrl: string }> {
+    return request(`/series/${slug}/season/${season}/episode/${episode}/stream`);
+  },
+
+  // ─── Storage (Cloudflare R2) ──────────────────────────────────
+  /** Get a pre-signed upload URL. Returns { url, key }. */
+  getUploadUrl(filename: string, contentType: string): Promise<{ url: string; key: string }> {
+    return request("/storage/upload-url", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ filename, contentType }),
+    });
+  },
+
+  /** Get a pre-signed view URL for a stored R2 key. Valid for 3 hours. */
+  getViewUrl(key: string): Promise<{ url: string }> {
+    return request(`/storage/view-url?key=${encodeURIComponent(key)}`);
   },
 };

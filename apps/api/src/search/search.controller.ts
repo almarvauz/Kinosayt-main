@@ -64,7 +64,9 @@ export class SearchController {
     }
 
     // Prisma fallback (ES unavailable or no results)
-    const where: any = { title: { contains: q, mode: "insensitive" } };
+    const where: any = q.startsWith("tt") 
+      ? { imdbId: q } 
+      : { title: { contains: q, mode: "insensitive" } };
     if (genre) where.genres = { some: { genre: { name: genre } } };
     if (year) where.year = parseInt(year as any);
 

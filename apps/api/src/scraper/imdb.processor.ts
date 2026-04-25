@@ -72,12 +72,13 @@ export class ImdbProcessor extends WorkerHost {
         return;
       }
 
+      const displayTitle = variants[0] || title;
       // Step 2: Fetch full details via IMDb GraphQL
       await this.sleep(DELAY_MS);
       const details = await this.fetchDetails(imdbId);
 
       if (!details) {
-        this.logger.debug(`No details for ${imdbId} ("${cleanTitle}")`);
+        this.logger.debug(`No details for ${imdbId} ("${displayTitle}")`);
         await this.markProcessed(movieId);
         return;
       }
@@ -100,11 +101,11 @@ export class ImdbProcessor extends WorkerHost {
 
       this.consecutiveErrors = 0;
       this.logger.log(
-        `Enriched [${movieId}] "${cleanTitle}" → ${details.titleText?.text} (${imdbId}) ★${details.ratingsSummary?.aggregateRating ?? "N/A"}`
+        `Enriched [${movieId}] "${displayTitle}" → ${details.titleText?.text} (${imdbId}) ★${details.ratingsSummary?.aggregateRating ?? "N/A"}`
       );
     } catch (err) {
       this.consecutiveErrors++;
-      this.logger.error(`Error enriching [${movieId}] "${cleanTitle}":`, err);
+      this.logger.error(`Error enriching [${movieId}] "${variants[0] || title}":`, err);
       throw err; // BullMQ retry
     }
   }
