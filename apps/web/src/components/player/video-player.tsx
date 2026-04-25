@@ -89,12 +89,15 @@ export function VideoPlayer({ slug, videoUrl, title, fullscreen = false }: Props
         speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] },
         keyboard: { focused: true, global: true },
         tooltips: { controls: true, seek: true },
-        // Use native fullscreen — container element will be passed below
+        // Use container option so Plyr uses our outer div for native fullscreen
         fullscreen: { enabled: true, fallback: false, iosNative: true },
         i18n: {
           qualityLabel: { 0: "Auto" },
         },
       });
+
+      // Plyr v3 doesn't officially document "container" in fullscreen options in all versions,
+      // but it looks for a selector. If it fails, we override the click handler below.
 
       playerRef.current = p;
 
@@ -134,23 +137,35 @@ export function VideoPlayer({ slug, videoUrl, title, fullscreen = false }: Props
         }
       });
 
-      // Native fullscreen: when Plyr requests fullscreen, use the outer container
-      // so the entire player (not just the <video> tag) fills the screen.
-      p.on("enterfullscreen", () => {
-        const el = containerRef.current;
-        if (!el) return;
-        if (el.requestFullscreen) {
-          el.requestFullscreen().catch(() => {});
-        } else if ((el as any).webkitRequestFullscreen) {
-          (el as any).webkitRequestFullscreen();
-        } else if ((el as any).mozRequestFullScreen) {
-          (el as any).mozRequestFullScreen();
-        }
-      });
+      // Override fullscreen button behavior to fullscreen the outer container
+      p.on("ready", () => {
+        const btn = p.elements.buttons.fullscreen;
+        if (btn && containerRef.current) {
+          // Remove default Plyr listeners
+          const clone = btn.cloneNode(true) as HTMLButtonElement;
+          btn.parentNode?.replaceChild(clone, btn);
+          
+          clone.addEventListener("click", () => {
+            const el = containerRef.current;
+            if (!document.fullscreenElement) {
+              if (el?.requestFullscreen) el.requestFullscreen().catch(() => {});
+              else if ((el as any).webkitRequestFullscreen) (el as any).webkitRequestFullscreen();
+              else if ((el as any).mozRequestFullScreen) (el as any).mozRequestFullScreen();
+            } else {
+              if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+              else if ((document as any).webkitExitFullscreen) (document as any).webkitExitFullscreen();
+              else if ((document as any).mozCancelFullScreen) (document as any).mozCancelFullScreen();
+            }
+          });
 
-      p.on("exitfullscreen", () => {
-        if (document.fullscreenElement) {
-          document.exitFullscreen().catch(() => {});
+          // Sync icon state with document fullscreen
+          const onFullscreenChange = () => {
+            const isFs = !!document.fullscreenElement;
+            if (isFs) clone.classList.add("plyr__control--pressed");
+            else clone.classList.remove("plyr__control--pressed");
+          };
+          document.addEventListener("fullscreenchange", onFullscreenChange);
+          p.on("destroy", () => document.removeEventListener("fullscreenchange", onFullscreenChange));
         }
       });
 
