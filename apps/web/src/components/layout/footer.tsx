@@ -29,19 +29,32 @@ export function Footer() {
 
           {/* Links */}
           <div className="flex items-center gap-6 text-sm">
-            <Link
-              href="/terms"
-              className="text-[rgb(var(--muted))] hover:text-[rgb(var(--fg))] transition-colors"
-            >
+            <Link href="/terms" className="text-[rgb(var(--muted))] hover:text-[rgb(var(--fg))] transition-colors">
               {t("footer.terms")}
             </Link>
-            <Link
-              href="/privacy"
-              className="text-[rgb(var(--muted))] hover:text-[rgb(var(--fg))] transition-colors"
-            >
+            <Link href="/privacy" className="text-[rgb(var(--muted))] hover:text-[rgb(var(--fg))] transition-colors">
               {t("footer.privacy")}
             </Link>
           </div>
+        </div>
+
+        {/* Telegram channel promo — subtle, non-intrusive */}
+        <div className="mt-6 flex justify-center">
+          <a
+            href="https://t.me/tarjimakinolar616"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-2xl bg-[rgb(var(--bg))] border border-base hover:border-brand-500/40 hover:bg-brand-500/5 transition-all duration-200 group"
+          >
+            {/* Telegram SVG icon */}
+            <svg className="w-5 h-5 text-[#2AABEE] flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.833.941z"/>
+            </svg>
+            <span className="text-sm text-[rgb(var(--muted))] group-hover:text-[rgb(var(--fg))] transition-colors">
+              Telegram kanalimizga obuna bo&apos;ling
+            </span>
+            <span className="text-xs font-medium text-[#2AABEE] opacity-80">@tarjimakinolar616</span>
+          </a>
         </div>
 
         {/* Disclaimer — subtle muted text above copyright */}

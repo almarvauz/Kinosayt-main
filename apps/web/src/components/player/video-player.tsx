@@ -15,6 +15,9 @@ interface Props {
   fullscreen?: boolean;
 }
 
+const RESUME_KEY = (slug: string) => `resume:${slug}`;
+const RESUME_THRESHOLD = 30; // don't resume if within last 30s
+
 export function VideoPlayer({ slug, videoUrl, title, fullscreen = false }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -94,6 +97,9 @@ export function VideoPlayer({ slug, videoUrl, title, fullscreen = false }: Props
 
       playerRef.current = p;
 
+      // Restore saved position
+      const saved = parseFloat(localStorage.getItem(RESUME_KEY(slug)) ?? "0");
+
       p.source = {
         type: "video" as const,
         sources: qualities.map((q) => ({
@@ -103,12 +109,37 @@ export function VideoPlayer({ slug, videoUrl, title, fullscreen = false }: Props
         })),
       };
 
+      p.on("ready", () => {
+        if (saved > 0) {
+          const duration = p.duration || 0;
+          // Resume only if not within last 30s of video
+          if (duration === 0 || saved < duration - RESUME_THRESHOLD) {
+            p.currentTime = saved;
+          }
+        }
+      });
+
+      // Save progress every 5s
+      const saveInterval = setInterval(() => {
+        if (!p.paused && p.currentTime > 0) {
+          localStorage.setItem(RESUME_KEY(slug), String(Math.floor(p.currentTime)));
+        }
+      }, 5000);
+
       p.on("play", () => {
         if (!viewTracked.current) {
           viewTracked.current = true;
           fetch(`/api/movies/${slug}/view`, { method: "POST" }).catch(() => {});
         }
       });
+
+      // Clear save when video ends
+      p.on("ended", () => {
+        localStorage.removeItem(RESUME_KEY(slug));
+        clearInterval(saveInterval);
+      });
+
+      return () => clearInterval(saveInterval);
     });
 
     function changeQuality(newQuality: number) {
