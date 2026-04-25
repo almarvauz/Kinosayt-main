@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "target": "ES2022",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "outDir": "./dist",
+    "baseUrl": ".",
+    "paths": {
+      "@kinosayt/types": ["../../packages/types/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*"]
+}

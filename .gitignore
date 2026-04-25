@@ -1,0 +1,9 @@
+# Kinosayt
+node_modules/
+.turbo/
+dist/
+.next/
+build/
+*.env
+.env.local
+.env.production

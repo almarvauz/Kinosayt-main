@@ -1,0 +1,13 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "target": "ES2022",
+    "outDir": "./dist",
+    "paths": {
+      "@kinosayt/types": ["../../packages/types/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*"]
+}

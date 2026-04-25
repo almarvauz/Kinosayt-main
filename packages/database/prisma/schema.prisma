@@ -1,0 +1,120 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  slug      String   @unique
+  movies    Movie[]
+  series    Series[]
+  createdAt DateTime @default(now())
+}
+
+model Genre {
+  id        Int           @id @default(autoincrement())
+  name      String        @unique
+  slug      String        @unique
+  movies    MovieGenre[]
+  series    SeriesGenre[]
+  createdAt DateTime      @default(now())
+}
+
+model Movie {
+  id              Int          @id @default(autoincrement())
+  externalId      Int          @unique
+  title           String
+  slug            String       @unique
+  videoUrl        String
+  posterUrl       String
+  year            Int
+  isPremiere      Boolean      @default(false)
+  premiereUntil   DateTime?
+  imdbRating      Float?
+  imdbDescription String?
+  imdbId          String?
+  viewCount       Int          @default(0)
+  code            String?
+  categoryId      Int?
+  category        Category?    @relation(fields: [categoryId], references: [id])
+  genres          MovieGenre[]
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([title])
+  @@index([slug])
+  @@index([year])
+  @@index([viewCount])
+}
+
+model MovieGenre {
+  movieId Int
+  genreId Int
+  movie   Movie @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  genre   Genre @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  @@id([movieId, genreId])
+}
+
+model Series {
+  id              Int            @id @default(autoincrement())
+  title           String
+  slug            String         @unique
+  posterUrl       String
+  year            Int
+  imdbRating      Float?
+  imdbDescription String?
+  imdbId          String?
+  viewCount       Int            @default(0)
+  categoryId      Int?
+  category        Category?      @relation(fields: [categoryId], references: [id])
+  genres          SeriesGenre[]
+  seasons         Season[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([title])
+  @@index([slug])
+  @@index([year])
+  @@index([viewCount])
+}
+
+model Season {
+  id          Int       @id @default(autoincrement())
+  seasonNumber Int
+  seriesId    Int
+  series      Series    @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+  episodes    Episode[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([seriesId, seasonNumber])
+}
+
+model Episode {
+  id            Int      @id @default(autoincrement())
+  episodeNumber Int
+  title         String?
+  videoUrl      String
+  seasonId      Int
+  season        Season   @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  viewCount     Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([seasonId, episodeNumber])
+}
+
+model SeriesGenre {
+  seriesId Int
+  genreId  Int
+  series   Series @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+  genre    Genre  @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  @@id([seriesId, genreId])
+}

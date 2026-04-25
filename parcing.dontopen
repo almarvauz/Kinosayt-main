@@ -1,0 +1,152 @@
+import aiohttp
+import asyncio
+from bs4 import BeautifulSoup
+from user_agent import generate_user_agent
+import os
+
+# --- PATH SOZLAMALARI ---
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+SITEMAP_FILE = os.path.join(BASE_DIR, "sitemap.xml")
+OUTPUT_FILE = os.path.join(BASE_DIR, "kinolar_bazasi.txt")
+
+SITEMAP_URL = "https://uzmovii.org/sitemap.xml"
+SEMAPHORE_LIMIT = 10  # 10 ta parallel so'rov
+TARGET_KEYWORD = "/tarjima-kinolar/" 
+
+# 1. SITEMAPNI INTERNETDAN YUKLASH FUNKSIYASI
+async def download_sitemap():
+    print(f"🌐 Sitemap internetdan yuklanmoqda: {SITEMAP_URL}")
+    async with aiohttp.ClientSession() as session:
+        try:
+            async with session.get(SITEMAP_URL, timeout=30) as response:
+                if response.status == 200:
+                    content = await response.read()
+                    with open(SITEMAP_FILE, "wb") as f:
+                        f.write(content)
+                    print("✅ Sitemap muvaffaqiyatli saqlandi!")
+                    return True
+                else:
+                    print(f"❌ Xatolik: Sitemap yuklab bo'lmadi. Status: {response.status}")
+                    return False
+        except Exception as e:
+            print(f"❌ Ulanish xatosi: {e}")
+            return False
+
+# 2. URL LARNI OLISH
+async def get_urls_from_sitemap():
+    # Agar fayl yo'q bo'lsa, oldin yuklab olamiz
+    if not os.path.exists(SITEMAP_FILE):
+        success = await download_sitemap()
+        if not success:
+            return []
+
+    print(f"📂 Fayl o'qilmoqda: {SITEMAP_FILE}")
+    with open(SITEMAP_FILE, "r", encoding="utf-8") as f:
+        content = f.read()
+    
+    # 'lxml' parser tezroq ishlaydi (agar o'rnatilgan bo'lsa), bo'lmasa 'xml'
+    soup = BeautifulSoup(content, 'xml')
+    urls = [loc.text.strip() for loc in soup.find_all("loc") if TARGET_KEYWORD in loc.text]
+    return urls
+
+# 3. KINO MA'LUMOTLARINI OLISH
+async def fetch_movie_data(session, url, semaphore, index, total):
+    async with semaphore:
+        headers = {'User-Agent': generate_user_agent(os='win')}
+        try:
+            # Serverni qiynamaslik uchun biroz kutish
+            await asyncio.sleep(0.3)
+            async with session.get(url, headers=headers, timeout=20) as response:
+                if response.status == 200:
+                    html = await response.text()
+                    res = parse_html(html)
+                    if res:
+                        print(f"[{index}/{total}] ✅ Tayyor: {res.split('|')[0].strip()}")
+                        return res
+        except Exception as e:
+            # Xatolikni konsolga chiqarmaymiz, shunchaki o'tkazib yuboramiz
+            pass
+        return None
+
+# 4. HTML PARSING (KUCHAYTIRILGAN)
+def parse_html(html):
+    try:
+        soup = BeautifulSoup(html, 'html.parser')
+        
+        # --- Nomi ---
+        meta_title = soup.find("meta", property="og:title")
+        if not meta_title: return None
+        title = meta_title["content"].replace("|", "-").strip()
+
+        # --- Poster ---
+        meta_image = soup.find("meta", property="og:image")
+        image = meta_image["content"] if meta_image else "Rasm yo'q"
+
+        # --- Janr ---
+        genre = "Tarjima"
+        # 1-usul: Maxsus class orqali qidirish
+        genre_links = soup.select('.kino-info a[href*="/janr/"]')
+        if genre_links:
+            # Birinchi topilgan janrni olamiz
+            genre = genre_links[0].text.strip()
+        
+        # --- MP4 Video Link ---
+        video_link = None
+        # Barcha havolalarni tekshiramiz
+        for link in soup.find_all("a", href=True):
+            href = link['href']
+            # .mp4 bilan tugaydigan va http bilan boshlanadigan linklar
+            if href.endswith(".mp4") and href.startswith("http"):
+                # Reklama linklarini filtrlaymiz (ixtiyoriy)
+                if "fayl" in href or "topfilm" in href or "cloud" in href:
+                    video_link = href
+                    # Agar 720 sifat topilsa, darhol to'xtatamiz (eng yaxshisi shu)
+                    if "720" in href:
+                        break
+        
+        if not video_link:
+            return None
+
+        # Format: Nomi | Link | Rasm | Janr
+        return f"{title} | {video_link} | {image} | {genre}\n"
+
+    except Exception:
+        return None
+
+async def main():
+    urls = await get_urls_from_sitemap()
+    if not urls:
+        print("❌ Kinolar ro'yxati bo'sh! URL yoki Sitemapda xato bor.")
+        return
+
+    # TEST REJIMI: Agar hammasini olmoqchi bo'lsangiz, [:100] ni olib tashlang
+    urls = urls[:10000]  # Dastlabki 10000 ta URL ni olamiz
+    total = len(urls)
+
+    print(f"🚀 Jarayon boshlandi. Jami: {total} ta kino qayta ishlanadi.")
+
+    semaphore = asyncio.Semaphore(SEMAPHORE_LIMIT)
+    async with aiohttp.ClientSession() as session:
+        tasks = []
+        for i, url in enumerate(urls, 1):
+            tasks.append(fetch_movie_data(session, url, semaphore, i, total))
+        
+        results = await asyncio.gather(*tasks)
+        
+        count = 0
+        with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
+            for res in results:
+                if res:
+                    f.write(res)
+                    count += 1
+        
+        print(f"\n🏁 TUGADI! {count} ta kino '{OUTPUT_FILE}' ga muvaffaqiyatli yozildi.")
+
+if __name__ == "__main__":
+    # Windows uchun maxsus sozlama
+    if os.name == 'nt':
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("\n🛑 Dastur to'xtatildi.")
