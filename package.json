@@ -9,6 +9,7 @@
   "scripts": {
     "dev": "bunx turbo run dev",
     "build": "bunx turbo run build",
+    "start": "bunx turbo run start",
     "lint": "bunx turbo run lint",
     "db:generate": "cd packages/database && bun x prisma generate",
     "db:migrate": "cd packages/database && bun x prisma migrate dev",
