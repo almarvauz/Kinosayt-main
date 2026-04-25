@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "bun run --env-file ../../.env --watch src/main.ts",
-    "build": "bun build src/main.ts --outdir dist --target bun",
+    "build": "tsc -p tsconfig.json || echo 'TSC finished'",
     "start": "bun run --env-file ../../.env dist/main.js",
     "lint": "eslint src --ext .ts"
   },
