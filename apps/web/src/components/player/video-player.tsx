@@ -89,7 +89,8 @@ export function VideoPlayer({ slug, videoUrl, title, fullscreen = false }: Props
         speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] },
         keyboard: { focused: true, global: true },
         tooltips: { controls: true, seek: true },
-        fullscreen: { enabled: true, fallback: true, iosNative: true },
+        // Use native fullscreen — container element will be passed below
+        fullscreen: { enabled: true, fallback: false, iosNative: true },
         i18n: {
           qualityLabel: { 0: "Auto" },
         },
@@ -130,6 +131,26 @@ export function VideoPlayer({ slug, videoUrl, title, fullscreen = false }: Props
         if (!viewTracked.current) {
           viewTracked.current = true;
           fetch(`/api/movies/${slug}/view`, { method: "POST" }).catch(() => {});
+        }
+      });
+
+      // Native fullscreen: when Plyr requests fullscreen, use the outer container
+      // so the entire player (not just the <video> tag) fills the screen.
+      p.on("enterfullscreen", () => {
+        const el = containerRef.current;
+        if (!el) return;
+        if (el.requestFullscreen) {
+          el.requestFullscreen().catch(() => {});
+        } else if ((el as any).webkitRequestFullscreen) {
+          (el as any).webkitRequestFullscreen();
+        } else if ((el as any).mozRequestFullScreen) {
+          (el as any).mozRequestFullScreen();
+        }
+      });
+
+      p.on("exitfullscreen", () => {
+        if (document.fullscreenElement) {
+          document.exitFullscreen().catch(() => {});
         }
       });
 
@@ -260,31 +281,21 @@ export function VideoPlayer({ slug, videoUrl, title, fullscreen = false }: Props
         }
       `}</style>
       <style jsx global>{`
-        /* Fullscreen: fill entire screen on all browsers */
-        .plyr:fullscreen video,
-        .plyr:-webkit-full-screen video,
-        .plyr:-moz-full-screen video {
-          width: 100% !important;
-          height: 100% !important;
-          object-fit: contain;
-        }
-        .plyr:fullscreen,
-        .plyr:-webkit-full-screen,
-        .plyr:-moz-full-screen {
+        /* Native fullscreen: container covers the entire screen */
+        :-webkit-full-screen { background: #000; }
+        :-moz-full-screen    { background: #000; }
+        :fullscreen          { background: #000; }
+
+        /* Plyr inside a fullscreen container */
+        :fullscreen .plyr,
+        :-webkit-full-screen .plyr,
+        :-moz-full-screen .plyr {
           width: 100vw !important;
           height: 100vh !important;
-          background: #000;
         }
-        /* Plyr fallback fullscreen (no native API) */
-        .plyr--fullscreen-fallback {
-          position: fixed !important;
-          inset: 0 !important;
-          width: 100% !important;
-          height: 100% !important;
-          z-index: 9999999 !important;
-          background: #000 !important;
-        }
-        .plyr--fullscreen-fallback video {
+        :fullscreen .plyr video,
+        :-webkit-full-screen .plyr video,
+        :-moz-full-screen .plyr video {
           width: 100% !important;
           height: 100% !important;
           object-fit: contain;
