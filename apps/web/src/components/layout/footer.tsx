@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useI18n } from "@/components/providers/i18n-provider";
-import { Clapperboard, AlertTriangle } from "lucide-react";
+import { Clapperboard } from "lucide-react";
 
 export function Footer() {
   const pathname = usePathname();
@@ -15,16 +15,6 @@ export function Footer() {
 
   return (
     <footer className="border-t border-base bg-[rgb(var(--card))]">
-      {/* Disclaimer banner */}
-      <div className="bg-yellow-500/10 border-b border-yellow-500/20">
-        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-          <p className="text-xs sm:text-sm text-center text-yellow-600 dark:text-yellow-400 leading-relaxed flex items-center justify-center gap-2">
-            <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-            {t("footer.disclaimer")}
-          </p>
-        </div>
-      </div>
-
       {/* Footer content */}
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -54,8 +44,14 @@ export function Footer() {
           </div>
         </div>
 
+        {/* Disclaimer — subtle muted text above copyright */}
+        <p className="mt-6 text-xs text-center text-[rgb(var(--muted))]/60 leading-relaxed max-w-2xl mx-auto">
+          Saytdagi barcha ma&apos;lumotlar faqat o&apos;rganish maqsadida. Mualliflik huquqi bilan
+          bog&apos;liq murojaat qilinganda har qanday film olib tashlanishi mumkin.
+        </p>
+
         {/* Copyright */}
-        <div className="mt-6 pt-4 border-t border-base text-center">
+        <div className="mt-3 pt-4 border-t border-base text-center">
           <p className="text-xs text-[rgb(var(--muted))]">
             © {year} Tarjima Kinolar 616. {t("footer.rights")}
           </p>
