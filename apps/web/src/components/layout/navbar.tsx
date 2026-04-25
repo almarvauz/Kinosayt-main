@@ -35,8 +35,8 @@ export function Navbar() {
         <Link href="/" className="flex items-center gap-1.5 sm:gap-2 text-brand-500 font-bold flex-shrink-0">
           <Clapperboard className="w-6 h-6 sm:w-7 sm:h-7" />
           <span className="hidden sm:flex flex-col leading-tight">
-            <span className="text-base">Kinosayt</span>
-            <span className="text-xs text-right tracking-widest">PRO</span>
+            <span className="text-base tracking-tight">PlayKino</span>
+            <span className="text-xs text-right tracking-widest font-black">UZ</span>
           </span>
         </Link>
 

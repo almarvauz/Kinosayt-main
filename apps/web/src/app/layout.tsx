@@ -10,8 +10,8 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
-  title: { default: "Tarjima Kinolar 616", template: "%s | Tarjima Kinolar 616" },
-  description: "O'zbek tilida eng yaxshi tarjima kinolar",
+  title: { default: "PlayKinoUz", template: "%s | PlayKinoUz" },
+  description: "O'zbek tilida eng yaxshi tarjima kinolar — PlayKinoUz",
 };
 
 export const viewport: Viewport = {

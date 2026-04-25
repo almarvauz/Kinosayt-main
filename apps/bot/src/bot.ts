@@ -35,9 +35,9 @@ const bot: Telegraf<Context<Update>> = new Telegraf(TOKEN);
 
 const t: Record<string, Record<Lang, string>> = {
   welcome: {
-    uz: "Assalomu alaykum, <b>%name%</b>! 🎬\n\n<b>Tarjima Kinolar 616</b> — O'zbek tilida kinolar platformasi.\n\nQuyidagi tugmalardan foydalaning 👇",
-    ru: "Привет, <b>%name%</b>! 🎬\n\n<b>Tarjima Kinolar 616</b> — Платформа с фильмами на узбекском языке.\n\nИспользуйте кнопки ниже 👇",
-    en: "Hello, <b>%name%</b>! 🎬\n\n<b>Tarjima Kinolar 616</b> — Movies platform in Uzbek language.\n\nUse the buttons below 👇",
+    uz: "Assalomu alaykum, <b>%name%</b>! 🎬\n\n<b>PlayKinoUz</b> — O'zbek tilida kinolar platformasi.\n\nQuyidagi tugmalardan foydalaning 👇",
+    ru: "Привет, <b>%name%</b>! 🎬\n\n<b>PlayKinoUz</b> — Платформа с фильмами на узбекском языке.\n\nИспользуйте кнопки ниже 👇",
+    en: "Hello, <b>%name%</b>! 🎬\n\n<b>PlayKinoUz</b> — Movies platform in Uzbek language.\n\nUse the buttons below 👇",
   },
   trending: { uz: "🔥 Trendlar", ru: "🔥 Тренды", en: "🔥 Trending" },
   search: { uz: "🔍 Kino qidirish", ru: "🔍 Поиск фильма", en: "🔍 Search movie" },
@@ -96,9 +96,9 @@ const t: Record<string, Record<Lang, string>> = {
   },
   genreError: { uz: "Janrlarni yuklashda xatolik.", ru: "Ошибка загрузки жанров.", en: "Error loading genres." },
   aboutText: {
-    uz: "ℹ️ <b>Tarjima Kinolar 616 haqida</b>\n\n🎬 5500+ O'zbek tilida kinolar\n📱 Barcha qurilmalar uchun\n🆓 Bepul va reklamasiz\n\nBot orqali istagan kinoingizni toping va tomosha qiling!",
-    ru: "ℹ️ <b>О Tarjima Kinolar 616</b>\n\n🎬 5500+ фильмов на узбекском языке\n📱 Для всех устройств\n🆓 Бесплатно и без рекламы\n\nИщите и смотрите фильмы прямо через бот!",
-    en: "ℹ️ <b>About Tarjima Kinolar 616</b>\n\n🎬 5500+ movies in Uzbek language\n📱 For all devices\n🆓 Free and ad-free\n\nFind and watch movies right from this bot!",
+    uz: "ℹ️ <b>PlayKinoUz haqida</b>\n\n🎬 5500+ O'zbek tilida kinolar\n📱 Barcha qurilmalar uchun\n🆓 Bepul va reklamasiz\n\nBot orqali istagan kinoingizni toping va tomosha qiling!",
+    ru: "ℹ️ <b>О PlayKinoUz</b>\n\n🎬 5500+ фильмов на узбекском языке\n📱 Для всех устройств\n🆓 Бесплатно и без рекламы\n\nИщите и смотрите фильмы прямо через бот!",
+    en: "ℹ️ <b>About PlayKinoUz</b>\n\n🎬 5500+ movies in Uzbek language\n📱 For all devices\n🆓 Free and ad-free\n\nFind and watch movies right from this bot!",
   },
   langSelect: {
     uz: "🌐 Tilni tanlang:",
@@ -438,7 +438,7 @@ bot.on(message("text"), async (ctx) => {
     for (const targetUid of knownUsers) {
       if (targetUid === uid) continue;
       try {
-        await ctx.telegram.sendMessage(targetUid, `📢 <b>Tarjima Kinolar 616:</b>\n\n${escHtml(text)}`, {
+        await ctx.telegram.sendMessage(targetUid, `📢 <b>PlayKinoUz:</b>\n\n${escHtml(text)}`, {
           parse_mode: "HTML",
         });
         sent++;

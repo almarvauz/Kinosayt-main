@@ -11,9 +11,12 @@ import {
   Shield,
   TrendingUp,
   Database,
+  Globe,
+  Loader2,
+  CheckCircle,
 } from "lucide-react";
 
-type Tab = "add" | "stats" | "settings";
+type Tab = "add" | "stats" | "settings" | "site";
 
 function StatCard({ icon: Icon, label, value, color }: { icon: any; label: string; value: string; color: string }) {
   return (
@@ -35,8 +38,38 @@ export function AdminDashboard() {
   const [unlocked, setUnlocked] = useState(false);
   const [pinError, setPinError] = useState(false);
 
-  // Simple frontend PIN guard (real security is on the API level)
-  const ADMIN_PIN = process.env.NEXT_PUBLIC_ADMIN_PIN || "1234";
+  // Site settings state
+  const [siteName, setSiteName] = useState("");
+  const [telegramChannel, setTelegramChannel] = useState("");
+  const [siteDescription, setSiteDescription] = useState("");
+  const [siteStatus, setSiteStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
+
+  const SUPER_ADMIN_TOKEN = process.env.NEXT_PUBLIC_SUPER_ADMIN_TOKEN || "";
+  const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
+  async function saveSiteSettings(e: React.FormEvent) {
+    e.preventDefault();
+    setSiteStatus("loading");
+    try {
+      const res = await fetch(`${API}/settings/site/config`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${SUPER_ADMIN_TOKEN}`,
+        },
+        body: JSON.stringify({
+          siteName: siteName || undefined,
+          telegramChannel: telegramChannel || undefined,
+          siteDescription: siteDescription || undefined,
+        }),
+      });
+      if (!res.ok) throw new Error();
+      setSiteStatus("ok");
+      setTimeout(() => setSiteStatus("idle"), 2500);
+    } catch {
+      setSiteStatus("error");
+    }
+  }
 
   if (!unlocked) {
     return (
@@ -114,7 +147,8 @@ export function AdminDashboard() {
         {([
           { id: "add", label: "Kontent qo'shish", icon: PlusCircle },
           { id: "stats", label: "Statistika", icon: BarChart3 },
-          { id: "settings", label: "Sozlamalar", icon: Settings },
+          { id: "site", label: "Sayt sozlamalari", icon: Globe },
+          { id: "settings", label: "Tizim sozlamalari", icon: Settings },
         ] as const).map(({ id, label, icon: Icon }) => (
           <button
             key={id}
@@ -144,6 +178,61 @@ export function AdminDashboard() {
             <p className="text-[rgb(var(--muted))] text-sm">
               Batafsil statistika tez orada qo&apos;shiladi.
             </p>
+          </div>
+        )}
+
+        {tab === "site" && (
+          <div className="max-w-xl">
+            <h2 className="text-lg font-bold mb-6 flex items-center gap-2">
+              <Globe className="w-5 h-5 text-brand-500" />
+              Sayt sozlamalari
+            </h2>
+            <form onSubmit={saveSiteSettings} className="space-y-5">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Sayt nomi</label>
+                <input
+                  value={siteName}
+                  onChange={(e) => setSiteName(e.target.value)}
+                  placeholder="PlayKinoUz"
+                  className="w-full px-4 py-2.5 rounded-xl bg-[rgb(var(--bg))] border border-base focus:outline-none focus:ring-2 focus:ring-brand-500/50 text-sm"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Telegram kanal linki</label>
+                <input
+                  value={telegramChannel}
+                  onChange={(e) => setTelegramChannel(e.target.value)}
+                  placeholder="https://t.me/playkinouz"
+                  className="w-full px-4 py-2.5 rounded-xl bg-[rgb(var(--bg))] border border-base focus:outline-none focus:ring-2 focus:ring-brand-500/50 text-sm"
+                />
+                <p className="text-xs text-[rgb(var(--muted))]">Footer'da ko&apos;rsatiladigan Telegram kanal manzili</p>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Sayt tavsifi</label>
+                <input
+                  value={siteDescription}
+                  onChange={(e) => setSiteDescription(e.target.value)}
+                  placeholder="O'zbek tilida eng yaxshi kinolar"
+                  className="w-full px-4 py-2.5 rounded-xl bg-[rgb(var(--bg))] border border-base focus:outline-none focus:ring-2 focus:ring-brand-500/50 text-sm"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={siteStatus === "loading"}
+                className="flex items-center gap-2 px-6 py-2.5 bg-brand-500 hover:bg-brand-600 disabled:opacity-60 text-white rounded-xl font-semibold transition-colors text-sm"
+              >
+                {siteStatus === "loading" ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Saqlanmoqda...</>
+                ) : siteStatus === "ok" ? (
+                  <><CheckCircle className="w-4 h-4" /> Saqlandi!</>
+                ) : (
+                  "Saqlash"
+                )}
+              </button>
+              {siteStatus === "error" && (
+                <p className="text-red-500 text-sm">Xatolik. SUPER_ADMIN_TOKEN tekshiring.</p>
+              )}
+            </form>
           </div>
         )}
 
