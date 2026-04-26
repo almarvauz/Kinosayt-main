@@ -37,7 +37,7 @@ export function R2VideoUploader({ onUploadComplete, label = "Video fayl" }: Prop
         body: JSON.stringify({ filename: file.name, contentType: file.type }),
       });
       if (!res.ok) throw new Error("Upload URL olishda xatolik");
-      const { url, key } = await res.json();
+      const { url, key, publicUrl } = await res.json();
 
       // 2. Upload directly to R2 with XHR for progress tracking
       await new Promise<void>((resolve, reject) => {
@@ -59,7 +59,7 @@ export function R2VideoUploader({ onUploadComplete, label = "Video fayl" }: Prop
 
       // Derive public-friendly key for display; backend will generate view URL on demand
       setState({ status: "done", progress: 100, key });
-      onUploadComplete(key, key); // caller stores key, fetches view URL when needed
+      onUploadComplete(key, publicUrl || key); // caller stores key, fetches view URL when needed
     } catch (err) {
       setState({ status: "error", progress: 0, error: (err as Error).message });
     }

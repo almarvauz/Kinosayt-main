@@ -84,6 +84,7 @@ export class SettingsController {
       accessKeyId?: string;
       secretAccessKey?: string;
       bucketName?: string;
+      publicDomain?: string;
     },
   ) {
     this.checkToken(auth);

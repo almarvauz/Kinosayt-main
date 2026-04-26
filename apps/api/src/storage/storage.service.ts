@@ -16,6 +16,7 @@ export class StorageService implements OnModuleInit {
   private readonly logger = new Logger(StorageService.name);
   private s3: S3Client | null = null;
   private bucketName = "kinosayt";
+  private publicDomain: string | null = null;
 
   constructor(
     private readonly config: ConfigService,
@@ -37,8 +38,10 @@ export class StorageService implements OnModuleInit {
     const accessKeyId   = dbConfig.accessKeyId   ?? this.config.get<string>("R2_ACCESS_KEY_ID");
     const secretKey     = dbConfig.secretAccessKey ?? this.config.get<string>("R2_SECRET_ACCESS_KEY");
     const bucketName    = dbConfig.bucketName    ?? this.config.get<string>("R2_BUCKET_NAME") ?? "kinosayt";
+    const publicDomain  = dbConfig.publicDomain  ?? this.config.get<string>("R2_PUBLIC_DOMAIN");
 
     this.bucketName = bucketName;
+    this.publicDomain = publicDomain ?? null;
 
     if (endpoint && accessKeyId && secretKey) {
       this.s3 = new S3Client({
@@ -76,6 +79,14 @@ export class StorageService implements OnModuleInit {
     });
     // View link valid for 3 hours — prevents cross-site hotlinking
     return getSignedUrl(this.s3!, command, { expiresIn: 10800 });
+  }
+
+  getPublicUrl(key: string): string | null {
+    if (!this.publicDomain) return null;
+    // ensure publicDomain doesn't end with / and key doesn't start with /
+    const baseUrl = this.publicDomain.replace(/\/$/, "");
+    const cleanKey = key.replace(/^\//, "");
+    return `${baseUrl}/${cleanKey}`;
   }
 
   async deleteFile(key: string): Promise<void> {

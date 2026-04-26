@@ -18,7 +18,8 @@ export class StorageController {
     const folder = isImage ? "images" : "videos";
     const key = `${folder}/${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
     const url = await this.storageService.getUploadUrl(key, body.contentType);
-    return { url, key };
+    const publicUrl = this.storageService.getPublicUrl(key);
+    return { url, key, publicUrl };
   }
 
   @Get("view-url")

@@ -233,7 +233,7 @@ export function AdminAddContentForm() {
       {/* Video upload — only for movies (series episodes added separately) */}
       {type === "movie" && (
         <R2VideoUploader
-          onUploadComplete={(key) => setVideoKey(key)}
+          onUploadComplete={(key, videoUrl) => setVideoKey(videoUrl)}
           label="Video faylni yuklash (R2)"
         />
       )}

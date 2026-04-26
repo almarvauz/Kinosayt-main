@@ -37,7 +37,7 @@ export function R2ImageUploader({ onUploadComplete, label = "Rasm fayl" }: Props
         body: JSON.stringify({ filename: file.name, contentType: file.type }),
       });
       if (!res.ok) throw new Error("Upload URL olishda xatolik");
-      const { url, key } = await res.json();
+      const { url, key, publicUrl } = await res.json();
 
       // 2. Upload directly to R2 with XHR for progress tracking
       await new Promise<void>((resolve, reject) => {
@@ -59,7 +59,7 @@ export function R2ImageUploader({ onUploadComplete, label = "Rasm fayl" }: Props
 
       // Derive public-friendly key for display; backend will generate view URL on demand
       setState({ status: "done", progress: 100, key });
-      onUploadComplete(key);
+      onUploadComplete(publicUrl || key);
     } catch (err) {
       setState({ status: "error", progress: 0, error: (err as Error).message });
     }

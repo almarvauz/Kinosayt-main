@@ -5,6 +5,8 @@ const nextConfig = {
       { hostname: "img.kinochilar.com" },
       { hostname: "m.media-amazon.com" },
       { hostname: "ia.media-imdb.com" },
+      { protocol: "https", hostname: "**" },
+      { protocol: "http", hostname: "**" },
     ],
   },
   async rewrites() {
