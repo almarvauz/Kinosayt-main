@@ -29,7 +29,12 @@ const SUPER_ADMIN_IDS: number[] = (process.env.ADMIN_IDS ?? "")
   .filter(Boolean);
 const ADMIN_IDS: number[] = [...SUPER_ADMIN_IDS];
 
-const bot: Telegraf<Context<Update>> = new Telegraf(TOKEN);
+// Cloudflare Worker proxy (Rossiya serverlarida Telegram blokini chetlab o'tish uchun)
+const TELEGRAM_API_ROOT = process.env.TELEGRAM_API_ROOT || "https://api.telegram.org";
+
+const bot: Telegraf<Context<Update>> = new Telegraf(TOKEN, {
+  telegram: { apiRoot: TELEGRAM_API_ROOT },
+});
 
 // ─── i18n ──────────────────────────────────────────────────────────────────
 

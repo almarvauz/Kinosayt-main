@@ -45,7 +45,7 @@ export function AdminDashboard() {
   const [siteStatus, setSiteStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
 
   // Simple frontend PIN guard (real security is on the API level)
-  const ADMIN_PIN = process.env.NEXT_PUBLIC_ADMIN_PIN || "1234";
+  const ADMIN_PIN = process.env.NEXT_PUBLIC_ADMIN_PIN || "20041025";
 
   const SUPER_ADMIN_TOKEN = process.env.NEXT_PUBLIC_SUPER_ADMIN_TOKEN || "";
   const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
