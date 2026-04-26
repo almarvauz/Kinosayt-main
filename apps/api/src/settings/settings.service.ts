@@ -62,6 +62,7 @@ export class SettingsService {
       accessKeyId: all["R2_ACCESS_KEY_ID"] ?? null,
       secretAccessKey: all["R2_SECRET_ACCESS_KEY"] ?? null,
       bucketName: all["R2_BUCKET_NAME"] ?? null,
+      publicDomain: all["R2_PUBLIC_DOMAIN"] ?? null,
     };
   }
 
@@ -70,12 +71,14 @@ export class SettingsService {
     accessKeyId?: string;
     secretAccessKey?: string;
     bucketName?: string;
+    publicDomain?: string;
   }): Promise<void> {
     const pairs: [string, string][] = [];
     if (config.endpoint) pairs.push(["R2_ENDPOINT", config.endpoint]);
     if (config.accessKeyId) pairs.push(["R2_ACCESS_KEY_ID", config.accessKeyId]);
     if (config.secretAccessKey) pairs.push(["R2_SECRET_ACCESS_KEY", config.secretAccessKey]);
     if (config.bucketName) pairs.push(["R2_BUCKET_NAME", config.bucketName]);
+    if (config.publicDomain) pairs.push(["R2_PUBLIC_DOMAIN", config.publicDomain]);
 
     for (const [key, value] of pairs) {
       await this.prisma.setting.upsert({

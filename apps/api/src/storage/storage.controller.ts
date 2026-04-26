@@ -14,7 +14,9 @@ export class StorageController {
   async getUploadUrl(@Body() body: { filename: string; contentType: string }) {
     // Generate a unique key for the file
     const ext = body.filename.split(".").pop();
-    const key = `videos/${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
+    const isImage = body.contentType.startsWith("image/");
+    const folder = isImage ? "images" : "videos";
+    const key = `${folder}/${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
     const url = await this.storageService.getUploadUrl(key, body.contentType);
     return { url, key };
   }

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { R2VideoUploader } from "./r2-video-uploader";
+import { R2ImageUploader } from "./r2-image-uploader";
 import { Film, Tv, Loader2, CheckCircle, AlertCircle, Zap } from "lucide-react";
 
 type ContentType = "movie" | "series";
@@ -20,6 +21,8 @@ export function AdminAddContentForm() {
   const [title, setTitle] = useState("");
   const [year, setYear] = useState(new Date().getFullYear().toString());
   const [posterUrl, setPosterUrl] = useState("");
+  const [posterKey, setPosterKey] = useState("");
+  const [uploadPoster, setUploadPoster] = useState(false);
   const [imdbId, setImdbId] = useState("");
   const [categorySlug, setCategorySlug] = useState("");
   const [genreSlugs, setGenreSlugs] = useState("");
@@ -62,7 +65,7 @@ export function AdminAddContentForm() {
       title: title.trim(),
       slug,
       year: parseInt(year),
-      posterUrl: posterUrl.trim(),
+      posterUrl: uploadPoster ? posterKey : posterUrl.trim(),
       videoUrl: videoKey,
       imdbId: imdbId.trim() || null,
       categorySlug: categorySlug.trim() || null,
@@ -83,7 +86,7 @@ export function AdminAddContentForm() {
       }
       setFormState({ status: "success", message: `${type === "movie" ? "Kino" : "Serial"} muvaffaqiyatli qo'shildi!` });
       // Reset
-      setTitle(""); setPosterUrl(""); setImdbId(""); setGenreSlugs(""); setVideoKey(""); setIsPremiere(false);
+      setTitle(""); setPosterUrl(""); setPosterKey(""); setImdbId(""); setGenreSlugs(""); setVideoKey(""); setIsPremiere(false);
     } catch (err) {
       setFormState({ status: "error", message: (err as Error).message });
     }
@@ -153,16 +156,33 @@ export function AdminAddContentForm() {
         </div>
       </div>
 
-      {/* Poster URL */}
-      <div className="space-y-1.5">
-        <label className="text-sm font-medium">Poster URL *</label>
-        <input
-          required
-          value={posterUrl}
-          onChange={(e) => setPosterUrl(e.target.value)}
-          placeholder="https://image.tmdb.org/..."
-          className="w-full px-4 py-2.5 rounded-xl bg-[rgb(var(--card))] border border-base focus:outline-none focus:ring-2 focus:ring-brand-500/50 text-sm"
-        />
+      {/* Poster URL or Upload */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <label className="text-sm font-medium">Poster Rasm *</label>
+          <button
+            type="button"
+            onClick={() => setUploadPoster(!uploadPoster)}
+            className="text-xs text-brand-500 hover:text-brand-600 font-medium"
+          >
+            {uploadPoster ? "URL orqali kiritish" : "Rasm yuklash (R2)"}
+          </button>
+        </div>
+        
+        {uploadPoster ? (
+          <R2ImageUploader
+            onUploadComplete={(key) => { setPosterKey(key); setPosterUrl(""); }}
+            label="Poster rasmini yuklash"
+          />
+        ) : (
+          <input
+            required
+            value={posterUrl}
+            onChange={(e) => setPosterUrl(e.target.value)}
+            placeholder="https://image.tmdb.org/..."
+            className="w-full px-4 py-2.5 rounded-xl bg-[rgb(var(--card))] border border-base focus:outline-none focus:ring-2 focus:ring-brand-500/50 text-sm"
+          />
+        )}
       </div>
 
       {/* IMDb ID + Enrich */}
